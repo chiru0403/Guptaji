@@ -1,0 +1,219 @@
+{
+  "info": {
+    "name": "Gupta Namkin API",
+    "description": "Import this file in Postman. Set collection variables baseUrl and adminToken. Admin routes use Authorization: Bearer {{adminToken}}. adminToken is ADMIN_TOKEN from backend/.env.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "adminToken", "value": "" },
+    { "key": "productId", "value": "1" },
+    { "key": "orderId", "value": "" },
+    { "key": "enquiryId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Public",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/health"
+          }
+        },
+        {
+          "name": "Site",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/site"
+          }
+        },
+        {
+          "name": "Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/categories"
+          }
+        },
+        {
+          "name": "Gallery",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/gallery"
+          }
+        },
+        {
+          "name": "Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?category=Mixtures&q=mix",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"],
+              "query": [
+                { "key": "category", "value": "Mixtures", "description": "Optional. Use All or omit for every category." },
+                { "key": "q", "value": "mix", "description": "Optional name search." }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Product by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/products/{{productId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('orderId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rahul Sharma\",\n  \"mobile\": \"9876543210\",\n  \"instructions\": \"Less spicy\",\n  \"discountCode\": \"\",\n  \"items\": [\n    { \"productId\": 1, \"qty\": 2 }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/orders"
+          }
+        },
+        {
+          "name": "List orders",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders?status=new",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders"],
+              "query": [
+                { "key": "status", "value": "new", "description": "Optional: new, confirmed, completed, cancelled" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update order status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+            },
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}"
+            },
+            "url": "{{baseUrl}}/api/orders/{{orderId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Enquiries",
+      "item": [
+        {
+          "name": "Create contact enquiry",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('enquiryId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"contact\",\n  \"name\": \"Rahul Sharma\",\n  \"mobile\": \"9876543210\",\n  \"email\": \"rahul@email.com\",\n  \"subject\": \"Shop visit\",\n  \"orderType\": \"\",\n  \"message\": \"What time do you open?\"\n}"
+            },
+            "url": "{{baseUrl}}/api/enquiries"
+          }
+        },
+        {
+          "name": "Create bulk enquiry",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"bulk\",\n  \"name\": \"Sharma Stores\",\n  \"mobile\": \"9876543210\",\n  \"email\": \"store@email.com\",\n  \"subject\": \"Wedding order\",\n  \"orderType\": \"Wedding\",\n  \"message\": \"Need 20 packs of sev for a wedding.\"\n}"
+            },
+            "url": "{{baseUrl}}/api/enquiries"
+          }
+        },
+        {
+          "name": "List enquiries",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries?type=contact",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "enquiries"],
+              "query": [
+                { "key": "type", "value": "contact", "description": "Optional: contact or bulk" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update enquiry status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+            },
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"contacted\"\n}"
+            },
+            "url": "{{baseUrl}}/api/enquiries/{{enquiryId}}"
+          }
+        }
+      ]
+    }
+  ]
+}

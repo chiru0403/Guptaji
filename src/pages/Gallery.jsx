@@ -1,10 +1,30 @@
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import PageMeta from '../components/PageMeta';
-import { galleryImages } from '../data/products';
+import { getGallery } from '../api';
 
 export default function Gallery() {
+  const [gallery, setGallery] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [active, setActive] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getGallery()
+      .then((images) => {
+        if (!cancelled) setGallery(Array.isArray(images) ? images : []);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message || 'Could not load gallery.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (active === null) return undefined;
@@ -34,27 +54,35 @@ export default function Gallery() {
           Snack moments, <em className="italic text-saffron">made better.</em>
         </h1>
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
-          {galleryImages.map((img, i) => (
-            <button
-              key={img.src}
-              type="button"
-              onClick={() => setActive(i)}
-              className={`group cursor-pointer overflow-hidden rounded-2xl border-0 p-0 ${
-                i === 0
-                  ? 'col-span-2 row-span-2 min-h-[280px] md:min-h-[420px]'
-                  : 'min-h-[160px] md:min-h-[200px]'
-              }`}
-            >
-              <img
-                src={img.src}
-                alt={img.alt}
-                loading="lazy"
-                className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-              />
-            </button>
-          ))}
-        </div>
+        {loading ? (
+          <p className="py-16 text-center text-muted">Loading gallery...</p>
+        ) : error ? (
+          <p className="py-16 text-center text-muted">{error}</p>
+        ) : gallery.length === 0 ? (
+          <p className="py-16 text-center text-muted">No gallery photos yet.</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
+            {gallery.map((img, i) => (
+              <button
+                key={img.src}
+                type="button"
+                onClick={() => setActive(i)}
+                className={`group cursor-pointer overflow-hidden rounded-2xl border-0 p-0 ${
+                  i === 0
+                    ? 'col-span-2 row-span-2 min-h-[280px] md:min-h-[420px]'
+                    : 'min-h-[160px] md:min-h-[200px]'
+                }`}
+              >
+                <img
+                  src={img.src}
+                  alt={img.alt}
+                  loading="lazy"
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                />
+              </button>
+            ))}
+          </div>
+        )}
       </section>
 
       {active !== null && (
@@ -74,8 +102,8 @@ export default function Gallery() {
             <X size={24} />
           </button>
           <img
-            src={galleryImages[active].src}
-            alt={galleryImages[active].alt}
+            src={gallery[active].src}
+            alt={gallery[active].alt}
             className="max-h-[85vh] max-w-full rounded-lg object-contain"
             onClick={(e) => e.stopPropagation()}
           />

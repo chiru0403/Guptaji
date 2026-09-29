@@ -1,5 +1,6 @@
 import { MessageCircle } from 'lucide-react';
 import { waLink } from '../data/site';
+import { useCatalog } from '../context/CatalogContext';
 
 const variants = {
   primary:
@@ -16,6 +17,7 @@ export default function WhatsAppButton({
   className = '',
   variant = 'primary',
 }) {
+  useCatalog();
   return (
     <a
       href={href || waLink()}

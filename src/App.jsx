@@ -4,9 +4,14 @@ import Layout from './components/Layout';
 import Home from './pages/Home';
 import About from './pages/About';
 import Products from './pages/Products';
+import ProductDetail from './pages/ProductDetail';
 import BulkOrders from './pages/BulkOrders';
 import Gallery from './pages/Gallery';
 import Contact from './pages/Contact';
+import Cart from './pages/Cart';
+import PrivacyPolicies from './pages/privacypolicies';
+import Terms from './pages/terms';
+import ShippingPolicy from './pages/Shipping Policy';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -25,9 +30,14 @@ export default function App() {
           <Route index element={<Home />} />
           <Route path="about" element={<About />} />
           <Route path="products" element={<Products />} />
+          <Route path="products/:id" element={<ProductDetail />} />
           <Route path="bulk-orders" element={<BulkOrders />} />
           <Route path="gallery" element={<Gallery />} />
           <Route path="contact" element={<Contact />} />
+          <Route path="cart" element={<Cart />} />
+          <Route path="terms" element={<Terms />} />
+          <Route path="privacy" element={<PrivacyPolicies />} />
+          <Route path="shipping" element={<ShippingPolicy />} />
         </Route>
       </Routes>
     </>

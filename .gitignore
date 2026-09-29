@@ -35,3 +35,7 @@ Desktop.ini
 
 # Zip deliverables (optional local copies)
 *.zip
+
+# Saved customer orders and enquiries
+backend/data/orders.json
+backend/data/enquiries.json

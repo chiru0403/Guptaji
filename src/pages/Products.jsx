@@ -1,29 +1,72 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import PageMeta from '../components/PageMeta';
 import ProductCard from '../components/ProductCard';
-import { categories, products } from '../data/products';
+import { getCategories, getProduct, getProducts } from '../api';
 
 export default function Products() {
   const [params] = useSearchParams();
   const paramCat = params.get('cat') || 'All';
-  const [cat, setCat] = useState(categories.includes(paramCat) ? paramCat : 'All');
+  const [cat, setCat] = useState(paramCat);
+  const [categories, setCategories] = useState(['All']);
   const [q, setQ] = useState('');
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  async function loadProducts({ category = cat, query = q } = {}) {
+    const term = query.trim();
+    setLoading(true);
+    setError('');
+    try {
+      if (/^\d+$/.test(term)) {
+        try {
+          const product = await getProduct(term);
+          setProducts([product]);
+        } catch {
+          setProducts([]);
+        }
+        return;
+      }
+      setProducts(await getProducts({ category, q: term }));
+    } catch (err) {
+      setProducts([]);
+      setError(err.message || 'Could not load products.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    if (categories.includes(paramCat)) setCat(paramCat);
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const nextCategories = await getCategories();
+        if (cancelled) return;
+        const known = Array.isArray(nextCategories) && nextCategories.length ? nextCategories : ['All'];
+        setCategories(known);
+        const initialCat = known.includes(paramCat) ? paramCat : 'All';
+        setCat(initialCat);
+        setProducts(await getProducts({ category: initialCat }));
+      } catch (err) {
+        if (!cancelled) setError(err.message || 'Could not load products.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, [paramCat]);
 
-  const filtered = useMemo(
-    () =>
-      products.filter(
-        (p) =>
-          (cat === 'All' || p.cat === cat) &&
-          p.name.toLowerCase().includes(q.toLowerCase())
-      ),
-    [cat, q]
-  );
+  function chooseCategory(nextCat) {
+    setCat(nextCat);
+    loadProducts({ category: nextCat, query: q });
+  }
 
   return (
     <>
@@ -43,9 +86,6 @@ export default function Products() {
                 Find your <em className="italic text-saffron">favourite crunch.</em>
               </h1>
             </div>
-            <p className="max-w-sm leading-relaxed text-muted">
-              Browse our popular namkeen and snacks. Every listed product is currently shown at ₹200.
-            </p>
           </div>
 
           <div className="mb-8 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
@@ -54,7 +94,7 @@ export default function Products() {
                 <button
                   key={c}
                   type="button"
-                  onClick={() => setCat(c)}
+                  onClick={() => chooseCategory(c)}
                   className={`cursor-pointer rounded-full border px-3.5 py-2 text-xs font-extrabold transition ${
                     cat === c
                       ? 'border-maroon bg-maroon text-white'
@@ -65,23 +105,39 @@ export default function Products() {
                 </button>
               ))}
             </div>
-            <label className="flex min-w-[210px] items-center gap-2 rounded-full border border-[#dec9af] bg-white px-3.5 py-2">
-              <Search size={18} className="text-[#89695f]" />
+            <form
+              className="flex min-w-[210px] items-center gap-2 rounded-full border border-[#dec9af] bg-white px-3.5 py-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                loadProducts();
+              }}
+            >
+              <button
+                type="submit"
+                aria-label="Search products"
+                className="grid place-items-center text-[#89695f]"
+              >
+                <Search size={18} />
+              </button>
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Search snacks..."
+                placeholder="Search by name or product id"
                 className="w-full border-0 bg-transparent text-sm outline-none"
                 aria-label="Search products"
               />
-            </label>
+            </form>
           </div>
 
-          {filtered.length === 0 ? (
+          {loading ? (
+            <p className="py-16 text-center text-muted">Loading products...</p>
+          ) : error ? (
+            <p className="py-16 text-center text-muted">{error}</p>
+          ) : products.length === 0 ? (
             <p className="py-16 text-center text-muted">No products match your search.</p>
           ) : (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filtered.map((p) => (
+              {products.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
             </div>

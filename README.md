@@ -20,12 +20,25 @@ Multi-page React website for **Gupta Namkin** (Yavatmal) — product catalogue w
 
 ## Run locally
 
+Start the API first, then the website. The site sends `/api` requests to `http://localhost:5000`.
+
+```bash
+cd backend
+npm install
+copy .env.example .env
+npm run dev
+```
+
+In a second terminal, from the website folder:
+
 ```bash
 npm install
 npm run dev
 ```
 
 Open the URL shown in the terminal (usually `http://localhost:5173`).
+
+Orders and enquiries are saved by the API and still open WhatsApp so the shop can confirm them. Read saved records with the admin token in `backend/.env`. See `backend/README.md`.
 
 ## Production build
 
@@ -42,5 +55,8 @@ npm run preview
 
 Update contact info and products in:
 
-- `src/data/site.js`
-- `src/data/products.js`
+- `backend/data/site.json`
+- `backend/data/products.json`
+- `backend/data/gallery.json`
+
+The files in `src/data/` are the fallback used when the API is offline. Keep them in step with the backend data.

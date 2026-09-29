@@ -1,10 +1,16 @@
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
+import { CartProvider } from './context/CartContext';
+import { CatalogProvider } from './context/CatalogContext';
 import './index.css';
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
-    <App />
+    <CatalogProvider>
+      <CartProvider>
+        <App />
+      </CartProvider>
+    </CatalogProvider>
   </BrowserRouter>
 );

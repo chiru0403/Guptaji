@@ -1,72 +1,194 @@
-import { useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
-import { Menu, X, MessageCircle } from 'lucide-react';
-import { navLinks, waLink } from '../data/site';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, Search, ShoppingCart } from 'lucide-react';
+import { navLinks } from '../data/site';
+import { useCart } from '../context/CartContext';
+import { useCatalog } from '../context/CatalogContext';
 
 export default function Header() {
-  const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const headerRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const { count, addItem } = useCart();
+  const { products } = useCatalog();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const onCartPage = pathname === '/cart';
+
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    return products.filter((product) => product.name.toLowerCase().includes(q));
+  }, [products, query]);
+
+  useEffect(() => {
+    function onPointerDown(event) {
+      if (!headerRef.current?.contains(event.target)) {
+        setSearchOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, []);
+
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
+
+  function openSearch() {
+    setMenuOpen(false);
+    setSearchOpen((open) => !open);
+  }
+
+  function addAndOrder(product) {
+    addItem(product);
+    setSearchOpen(false);
+    navigate('/cart');
+  }
 
   return (
-    <header className="sticky top-0 z-50 flex h-[78px] items-center gap-6 border-b border-[#f0dfca] bg-sand/95 px-5 backdrop-blur-md md:px-7 lg:px-[max(1.75rem,calc((100vw-1180px)/2))]">
-      <Link to="/" className="flex min-w-0 items-center gap-2.5" onClick={() => setOpen(false)}>
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border-[3px] border-gold bg-maroon font-display text-[27px] text-gold">
-          G
-        </span>
-        <span>
-          <b className="block font-display text-[22px] leading-[18px] text-maroon">Gupta</b>
-          <small className="text-[9px] font-extrabold tracking-[0.25em] text-saffron">NAMKIN</small>
-        </span>
-      </Link>
+    <header
+      ref={headerRef}
+      className="sticky top-0 z-50 border-b border-[#f0dfca] bg-sand/95 backdrop-blur-md"
+    >
+      <div className="relative flex h-[78px] w-full items-center justify-between px-4 sm:px-6">
+        <Link to="/" className="z-10 flex shrink-0 items-center gap-2.5" onClick={() => setMenuOpen(false)}>
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border-[3px] border-gold bg-maroon font-display text-[27px] text-gold">
+            G
+          </span>
+          <span>
+            <b className="block font-display text-[22px] leading-[18px] text-maroon">Gupta</b>
+            <small className="text-[9px] font-extrabold tracking-[0.25em] text-saffron">NAMKIN</small>
+          </span>
+        </Link>
 
-      <nav
-        className={`${
-          open ? 'flex' : 'hidden'
-        } absolute inset-x-0 top-[78px] flex-col gap-5 bg-sand p-6 shadow-lg md:static md:mx-auto md:flex md:flex-row md:gap-6 md:bg-transparent md:p-0 md:shadow-none`}
-      >
-        {navLinks.map((link) => (
-          <NavLink
-            key={link.to}
-            to={link.to}
-            end={link.to === '/'}
-            onClick={() => setOpen(false)}
-            className={({ isActive }) =>
-              `relative text-sm font-bold after:absolute after:bottom-[-8px] after:left-0 after:h-0.5 after:bg-saffron after:transition-all ${
-                isActive
-                  ? 'text-saffron after:right-0'
-                  : 'text-ink after:right-full hover:after:right-0'
-              }`
-            }
-          >
-            {link.label}
-          </NavLink>
-        ))}
-        <a
-          href={waLink()}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-saffron px-4 py-3 text-sm font-extrabold text-white md:hidden"
+        <nav
+          className={`${
+            menuOpen ? 'flex' : 'hidden'
+          } absolute inset-x-0 top-[78px] z-40 flex-col gap-5 bg-sand p-6 shadow-lg md:absolute md:inset-x-auto md:top-1/2 md:left-1/2 md:flex md:-translate-x-1/2 md:-translate-y-1/2 md:flex-row md:gap-6 md:bg-transparent md:p-0 md:shadow-none`}
         >
-          <MessageCircle size={18} /> Order on WhatsApp
-        </a>
-      </nav>
+          {navLinks.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.to === '/'}
+              onClick={() => setMenuOpen(false)}
+              className={({ isActive }) =>
+                `relative text-sm font-bold after:absolute after:bottom-[-8px] after:left-0 after:h-0.5 after:bg-saffron after:transition-all ${
+                  isActive
+                    ? 'text-saffron after:right-0'
+                    : 'text-ink after:right-full hover:after:right-0'
+                }`
+              }
+            >
+              {link.label}
+            </NavLink>
+          ))}
+        </nav>
 
-      <a
-        href={waLink()}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="hidden items-center gap-2 rounded-full bg-saffron px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-saffron/25 transition hover:-translate-y-0.5 hover:bg-saffron-dark lg:inline-flex"
-      >
-        <MessageCircle size={18} /> Order on WhatsApp
-      </a>
+        <div className="z-10 ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
+          <button
+            type="button"
+            aria-label="Search products"
+            aria-expanded={searchOpen}
+            onClick={openSearch}
+            className={`grid h-11 w-11 place-items-center rounded-full transition ${
+              searchOpen ? 'bg-maroon text-white' : 'text-maroon hover:bg-[#f3e4d2]'
+            }`}
+          >
+            <Search size={20} />
+          </button>
 
-      <button
-        type="button"
-        className="ml-auto border-0 bg-transparent text-maroon md:hidden"
-        aria-label={open ? 'Close menu' : 'Open menu'}
-        onClick={() => setOpen(!open)}
-      >
-        {open ? <X /> : <Menu />}
-      </button>
+          {!onCartPage && (
+            <Link
+              to="/cart"
+              aria-label={`Cart, ${count} items`}
+              onClick={() => {
+                setSearchOpen(false);
+                setMenuOpen(false);
+              }}
+              className="relative grid h-11 w-11 place-items-center rounded-full text-maroon transition hover:bg-[#f3e4d2]"
+            >
+              <ShoppingCart size={20} />
+              {count > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-saffron px-1 text-[10px] font-black text-white">
+                  {count}
+                </span>
+              )}
+            </Link>
+          )}
+
+          <button
+            type="button"
+            className="grid h-11 w-11 place-items-center border-0 bg-transparent text-maroon md:hidden"
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            onClick={() => {
+              setSearchOpen(false);
+              setMenuOpen((open) => !open);
+            }}
+          >
+            {menuOpen ? <X /> : <Menu />}
+          </button>
+        </div>
+      </div>
+
+      {searchOpen && (
+        <div className="absolute right-4 top-[78px] z-50 w-[min(100vw-2rem,420px)] rounded-2xl border border-[#ecd9c0] bg-white p-4 shadow-2xl md:right-7">
+          <label className="flex items-center gap-2 rounded-full border border-[#dec9af] px-3 py-2">
+            <Search size={16} className="text-[#89695f]" />
+            <input
+              ref={searchInputRef}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search snacks..."
+              aria-label="Search snacks"
+              className="w-full border-0 bg-transparent text-sm outline-none"
+            />
+          </label>
+
+          <div className="mt-3 max-h-80 overflow-y-auto">
+            {!query.trim() && (
+              <p className="px-1 py-6 text-center text-sm text-muted">Type a product name to see matches.</p>
+            )}
+            {query.trim() && results.length === 0 && (
+              <p className="px-1 py-6 text-center text-sm text-muted">No products match “{query.trim()}”.</p>
+            )}
+            {results.length > 0 && (
+              <ul className="space-y-2">
+                {results.map((product) => (
+                  <li
+                    key={product.id}
+                    onClick={() => {
+                      setSearchOpen(false);
+                      navigate(`/products/${product.id}`);
+                    }}
+                    className="flex cursor-pointer items-center gap-3 rounded-xl bg-cream p-2"
+                  >
+                    <img src={product.img} alt="" className="h-12 w-12 rounded-lg object-cover" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-maroon">{product.name}</p>
+                      <p className="text-xs text-saffron">₹{product.price}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        addAndOrder(product);
+                      }}
+                      className="rounded-full bg-saffron px-3 py-1.5 text-[11px] font-extrabold text-white hover:bg-saffron-dark"
+                    >
+                      Add
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+
     </header>
   );
 }

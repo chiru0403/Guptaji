@@ -1,12 +1,29 @@
+import { useState } from 'react';
 import { Phone, MessageCircle, MapPin, Clock, ArrowRight } from 'lucide-react';
 import PageMeta from '../components/PageMeta';
 import WhatsAppButton from '../components/WhatsAppButton';
-import { site, waLink } from '../data/site';
+import { createEnquiry } from '../api';
+import { waLink } from '../data/site';
+import { useCatalog } from '../context/CatalogContext';
 
 export default function Contact() {
-  function onSubmit(e) {
+  const { site } = useCatalog();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [saved, setSaved] = useState(null);
+
+  async function onSubmit(e) {
     e.preventDefault();
-    const f = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const f = new FormData(form);
+    const payload = {
+      type: 'contact',
+      name: f.get('name'),
+      mobile: f.get('mobile'),
+      email: f.get('email'),
+      subject: f.get('subject'),
+      message: f.get('message'),
+    };
     const parts = [
       f.get('subject') || 'General Enquiry',
       `${f.get('name')}`,
@@ -14,7 +31,20 @@ export default function Contact() {
       f.get('email') ? `Email: ${f.get('email')}` : '',
       f.get('message'),
     ].filter(Boolean);
-    window.open(waLink(parts.join(' — ')), '_blank');
+
+    setSubmitting(true);
+    setError('');
+    try {
+      const enquiry = await createEnquiry(payload);
+      const link = waLink(`${parts.join(' — ')} (Ref: ${enquiry.ref})`);
+      window.open(link, '_blank', 'noopener,noreferrer');
+      setSaved({ ref: enquiry.ref, link });
+      form.reset();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -129,11 +159,21 @@ export default function Contact() {
               placeholder="Tell us what you need..."
               className="mb-4 w-full resize-y rounded-xl border border-[#e3cdb4] px-4 py-3.5 outline-none focus:border-saffron"
             />
+            {error && <p className="mb-3 text-sm text-red-700">{error}</p>}
+            {saved && (
+              <p className="mb-3 text-sm text-maroon">
+                Enquiry {saved.ref} is saved.{' '}
+                <a href={saved.link} target="_blank" rel="noopener noreferrer" className="font-bold underline">
+                  Open WhatsApp
+                </a>
+              </p>
+            )}
             <button
               type="submit"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-saffron px-5 py-3.5 font-extrabold text-white transition hover:bg-saffron-dark"
+              disabled={submitting}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-saffron px-5 py-3.5 font-extrabold text-white transition hover:bg-saffron-dark disabled:opacity-60"
             >
-              Send via WhatsApp <ArrowRight size={18} />
+              {submitting ? 'Saving enquiry...' : 'Save & send on WhatsApp'} <ArrowRight size={18} />
             </button>
           </form>
         </div>

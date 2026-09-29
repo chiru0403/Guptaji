@@ -1,14 +1,68 @@
+import { useState } from 'react';
 import { Gift, PartyPopper, Building2, Sparkles } from 'lucide-react';
 import PageMeta from '../components/PageMeta';
 import WhatsAppButton from '../components/WhatsAppButton';
+import { createEnquiry } from '../api';
 import { waLink } from '../data/site';
 
 export default function BulkOrders() {
-  function onSubmit(e) {
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [saved, setSaved] = useState(null);
+
+  async function onSubmit(e) {
     e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const msg = `Bulk / Festive Enquiry - ${f.get('name')} (${f.get('mobile')}): ${f.get('orderType')} — ${f.get('message')}`;
-    window.open(waLink(msg), '_blank');
+    const form = e.currentTarget;
+    const f = new FormData(form);
+    const mobileDigits = String(f.get('mobile') || '').replace(/\D/g, '');
+    const mobile = mobileDigits.startsWith('91') && mobileDigits.length > 10
+      ? mobileDigits.slice(-10)
+      : mobileDigits.replace(/^0+/, '');
+    const email = String(f.get('email') || '').trim();
+    if (!/^[6-9]\d{9}$/.test(mobile)) {
+      setError('Enter a 10-digit mobile number starting with 6, 7, 8, or 9.');
+      return;
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Enter a valid email address or leave it blank.');
+      return;
+    }
+    const payload = {
+      type: 'bulk',
+      name: String(f.get('name') || '').trim(),
+      mobile,
+      email,
+      subject: String(f.get('subject') || '').trim(),
+      orderType: String(f.get('orderType') || '').trim(),
+      message: String(f.get('message') || '').trim(),
+    };
+    setSubmitting(true);
+    setError('');
+    const waWindow = window.open('', '_blank', 'noopener,noreferrer');
+    try {
+      const enquiry = await createEnquiry(payload);
+      const msg = [
+        `Bulk enquiry ${enquiry.ref}`,
+        payload.subject,
+        payload.name,
+        `Customer mobile: ${payload.mobile}`,
+        payload.email && `Email: ${payload.email}`,
+        payload.orderType && `Order type: ${payload.orderType}`,
+        payload.message,
+      ]
+        .filter(Boolean)
+        .join('\n');
+      const link = waLink(msg);
+      if (waWindow) waWindow.location.href = link;
+      else window.location.href = link;
+      setSaved({ ...enquiry, link });
+      form.reset();
+    } catch (err) {
+      waWindow?.close();
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -72,37 +126,62 @@ export default function BulkOrders() {
         >
           <h2 className="mt-0 mb-2 font-display text-3xl text-maroon">Send a bulk enquiry</h2>
           <p className="mb-6 text-sm text-muted">
-            We&apos;ll open WhatsApp with your details so you can confirm quantity and timing.
+            Your enquiry is saved to the shop. We will contact you on the mobile number you enter.
           </p>
           <input
             name="name"
             required
-            placeholder="Your name"
+            placeholder="Name, for example Sharma Stores"
             className="mb-3 w-full rounded-xl border border-[#e3cdb4] px-4 py-3.5 outline-none focus:border-saffron"
           />
           <input
             name="mobile"
             required
+            inputMode="numeric"
             placeholder="Mobile number"
             className="mb-3 w-full rounded-xl border border-[#e3cdb4] px-4 py-3.5 outline-none focus:border-saffron"
           />
           <input
+            name="email"
+            type="email"
+            placeholder="Email, for example store@email.com"
+            className="mb-3 w-full rounded-xl border border-[#e3cdb4] px-4 py-3.5 outline-none focus:border-saffron"
+          />
+          <input
+            name="subject"
+            placeholder="Subject, for example Wedding order"
+            className="mb-3 w-full rounded-xl border border-[#e3cdb4] px-4 py-3.5 outline-none focus:border-saffron"
+          />
+          <input
             name="orderType"
-            placeholder="Order type (party / office / festive)"
+            placeholder="Order type, for example Wedding"
             className="mb-3 w-full rounded-xl border border-[#e3cdb4] px-4 py-3.5 outline-none focus:border-saffron"
           />
           <textarea
             name="message"
             required
             rows={5}
-            placeholder="Tell us what you need..."
+            placeholder="Message, for example Need 20 packs of sev for a wedding."
             className="mb-4 w-full resize-y rounded-xl border border-[#e3cdb4] px-4 py-3.5 outline-none focus:border-saffron"
           />
+          {error && <p className="mb-3 text-sm text-red-700">{error}</p>}
+          {saved && (
+            <div className="mb-4 rounded-2xl bg-cream px-4 py-3 text-sm text-maroon">
+              <p className="font-bold">Enquiry {saved.ref} sent</p>
+              <p className="mt-1 text-muted">
+                {saved.status} · {saved.subject || saved.orderType || 'Bulk order'}
+              </p>
+              <a href={saved.link} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block font-bold underline">
+                Open WhatsApp
+              </a>
+            </div>
+          )}
           <button
             type="submit"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-saffron px-5 py-3.5 font-extrabold text-white transition hover:bg-saffron-dark"
+            disabled={submitting}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-saffron px-5 py-3.5 font-extrabold text-white transition hover:bg-saffron-dark disabled:opacity-60"
           >
-            Send via WhatsApp
+            {submitting ? 'Sending enquiry...' : 'Send enquiry'}
           </button>
         </form>
       </section>

@@ -3,8 +3,10 @@ import { MessageCircle } from 'lucide-react';
 import Header from './Header';
 import Footer from './Footer';
 import { waLink } from '../data/site';
+import { useCatalog } from '../context/CatalogContext';
 
 export default function Layout() {
+  useCatalog();
   return (
     <div className="flex min-h-screen flex-col">
       <Header />

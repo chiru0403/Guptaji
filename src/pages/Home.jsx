@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
@@ -12,12 +13,14 @@ import {
 import PageMeta from '../components/PageMeta';
 import ProductCard from '../components/ProductCard';
 import WhatsAppButton from '../components/WhatsAppButton';
-import { products, categoryCards } from '../data/products';
-import { site, waLink } from '../data/site';
-
-const popular = products.filter((p) => p.popular).slice(0, 8);
+import { waLink } from '../data/site';
+import { useCatalog } from '../context/CatalogContext';
 
 export default function Home() {
+  const { products, categories, site } = useCatalog();
+  const categoryNames = categories.filter((name) => name !== 'All');
+  const popular = useMemo(() => products.filter((p) => p.popular).slice(0, 8), [products]);
+
   return (
     <>
       <PageMeta
@@ -141,19 +144,14 @@ export default function Home() {
           Browse by <em className="italic text-saffron">craving.</em>
         </h2>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-          {categoryCards.map((c) => (
+          {categoryNames.map((name) => (
             <Link
-              key={c.name}
-              to={
-                c.to ||
-                `/products?cat=${encodeURIComponent(
-                  c.name === 'Festive Packs' ? 'Festive / Gift Packs' : c.name
-                )}`
-              }
+              key={name}
+              to={`/products?cat=${encodeURIComponent(name)}`}
               className="rounded-2xl border border-[#ecd9c0] bg-cream p-5 transition hover:-translate-y-0.5 hover:border-saffron hover:shadow-md"
             >
-              <b className="block font-display text-xl text-maroon">{c.name}</b>
-              <span className="text-xs text-[#89695f]">{c.hint}</span>
+              <b className="block font-display text-xl text-maroon">{name}</b>
+              <span className="text-xs text-[#89695f]">View products</span>
             </Link>
           ))}
         </div>
