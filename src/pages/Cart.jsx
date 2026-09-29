@@ -21,28 +21,49 @@ export default function Cart() {
   const grandTotal = total + packingCharge;
 
   async function checkout() {
+    const customerName = name.trim();
+    const digits = mobile.replace(/\D/g, '');
+    const customerMobile = digits.startsWith('91') && digits.length > 10
+      ? digits.slice(-10)
+      : digits.replace(/^0+/, '');
+    if (customerName.length < 2) {
+      setError('Name must be at least 2 characters.');
+      return;
+    }
+    if (!/^[6-9]\d{9}$/.test(customerMobile)) {
+      setError('Enter a 10-digit mobile number starting with 6, 7, 8, or 9.');
+      return;
+    }
+    if (items.length === 0) {
+      setError('Add at least one product before placing the order.');
+      return;
+    }
+
     setError('');
     setSubmitting(true);
     const snapshot = items;
+    const waWindow = window.open('', '_blank', 'noopener,noreferrer');
     try {
       const order = await createOrder({
-        name,
-        mobile,
+        name: customerName,
+        mobile: customerMobile,
         instructions,
         discountCode,
         items: snapshot.map((item) => ({ productId: item.id, qty: item.qty })),
       });
       const link = waCartLink(snapshot, {
-        name,
-        mobile,
+        name: customerName,
+        mobile: customerMobile,
         instructions,
         discountCode,
         orderNo: order.orderNo,
       });
-      window.open(link, '_blank', 'noopener,noreferrer');
+      if (waWindow) waWindow.location.href = link;
+      else window.location.href = link;
       clearCart();
-      setSaved({ orderNo: order.orderNo, link });
+      setSaved({ orderNo: order.orderNo, link, total: order.total, status: order.status });
     } catch (err) {
+      waWindow?.close();
       setError(err.message);
     } finally {
       setSubmitting(false);
@@ -62,8 +83,9 @@ export default function Cart() {
             <div className="mb-10 rounded-2xl border border-[#ecd9c0] bg-[#fff8eb] px-6 py-8 text-center">
               <h1 className="font-display text-4xl text-maroon">Order {saved.orderNo} is saved</h1>
               <p className="mx-auto mt-3 max-w-md text-sm text-[#666]">
-                WhatsApp should open so the shop can confirm availability. Use the link below if it
-                did not.
+                Saved to the shop as {saved.status || 'new'}
+                {saved.total != null ? ` · ₹${saved.total}.00` : ''}. WhatsApp opens to 8378815442 so
+                the shop can confirm it.
               </p>
               <div className="mt-6 flex flex-wrap justify-center gap-3">
                 <a
@@ -226,7 +248,7 @@ export default function Cart() {
                     disabled={submitting}
                     className="mx-auto mt-3 flex w-fit rounded-full bg-saffron px-5 py-2.5 text-sm font-bold text-white hover:bg-saffron-dark disabled:opacity-60"
                   >
-                    {submitting ? 'Saving order...' : 'Place order on WhatsApp'}
+                    {submitting ? 'Saving order...' : 'Place order'}
                   </button>
                 </div>
               </div>
