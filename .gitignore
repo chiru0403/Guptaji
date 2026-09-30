@@ -39,3 +39,5 @@ Desktop.ini
 # Saved customer orders and enquiries
 backend/data/orders.json
 backend/data/enquiries.json
+
+.vercel

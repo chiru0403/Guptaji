@@ -32,7 +32,7 @@ export default function Footer() {
 
   return (
     <footer className="bg-[#1c140e] text-[#e6d3b3]">
-      <div className="grid w-full items-start gap-10 px-6 py-12 md:px-8 lg:grid-cols-[auto_auto_auto_1fr] lg:gap-16">
+      <div className="grid w-full items-start gap-10 px-5 py-12 sm:px-6 md:px-8 lg:grid-cols-[auto_auto_auto_1fr] lg:gap-16">
         <div>
           <div className="flex h-12 items-center gap-3">
             <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full border-2 border-[#e07a2f] bg-[#3a2418] font-display text-xl text-[#f0c27a]">
@@ -40,13 +40,13 @@ export default function Footer() {
             </span>
             <span>
               <b className="block font-display text-2xl leading-none text-[#f3e6cf]">{site.name}</b>
-              <small className="mt-1 block whitespace-nowrap text-[10px] font-semibold tracking-[0.22em] text-[#c4a574]">
+              <small className="mt-1 block text-[10px] font-semibold tracking-[0.14em] text-[#c4a574] sm:tracking-[0.22em]">
                 ROASTED · SPICED · YOURS
               </small>
             </span>
           </div>
           <p className="mt-5 text-sm text-[#d7c4a4]">Roasted fresh, shipped fast — since 1990.</p>
-          <p className="mt-3 whitespace-nowrap text-[11px] font-semibold tracking-[0.16em] text-[#8b9a45]">
+          <p className="mt-3 max-w-xs text-[11px] font-semibold leading-relaxed tracking-[0.12em] text-[#8b9a45] sm:tracking-[0.16em]">
             HAND-TEMPERED · SMALL-BATCH · ZERO PRESERVATIVES
           </p>
         </div>
@@ -57,7 +57,7 @@ export default function Footer() {
               key={link.to}
               to={link.to}
               className={`text-sm font-medium leading-none text-[#f0e2c8] transition hover:text-[#f0c27a] ${
-                index === 0 ? 'flex h-12 items-center' : ''
+                index === 0 ? 'flex items-center lg:h-12' : ''
               }`}
             >
               {link.label}
@@ -71,7 +71,7 @@ export default function Footer() {
               key={link.to}
               to={link.to}
               className={`text-sm font-medium leading-none text-[#f0e2c8] transition hover:text-[#f0c27a] ${
-                index === 0 ? 'flex h-12 items-center' : ''
+                index === 0 ? 'flex items-center lg:h-12' : ''
               }`}
             >
               {link.label}
@@ -80,7 +80,7 @@ export default function Footer() {
         </nav>
 
         <div className="lg:justify-self-end lg:text-right">
-          <p className="flex h-12 items-center text-[11px] font-semibold leading-none tracking-[0.22em] text-[#c4a574] lg:justify-end">
+          <p className="flex items-center text-[11px] font-semibold leading-none tracking-[0.18em] text-[#c4a574] sm:tracking-[0.22em] lg:h-12 lg:justify-end">
             ORDER & FOLLOW
           </p>
           <div className="mt-4 flex items-center gap-3 lg:justify-end">
@@ -109,7 +109,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="px-6 pb-6 text-xs text-[#b7a48a] md:px-8">
+      <div className="px-5 pb-24 text-xs text-[#b7a48a] sm:px-6 md:px-8">
         © {new Date().getFullYear()} {site.name}. All crunch reserved.
       </div>
     </footer>

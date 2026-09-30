@@ -8,8 +8,10 @@ import { useCatalog } from '../context/CatalogContext';
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const [query, setQuery] = useState('');
   const headerRef = useRef(null);
+  const lastScrollY = useRef(0);
   const searchInputRef = useRef(null);
   const { count, addItem } = useCart();
   const { products } = useCatalog();
@@ -37,6 +39,31 @@ export default function Header() {
     if (searchOpen) searchInputRef.current?.focus();
   }, [searchOpen]);
 
+  useEffect(() => {
+    document.documentElement.classList.toggle('header-hidden', hidden);
+    return () => document.documentElement.classList.remove('header-hidden');
+  }, [hidden]);
+
+  useEffect(() => {
+    lastScrollY.current = window.scrollY;
+
+    function onScroll() {
+      const y = window.scrollY;
+      const delta = y - lastScrollY.current;
+      if (menuOpen || searchOpen || y < 48) {
+        setHidden(false);
+      } else if (delta > 8) {
+        setHidden(true);
+      } else if (delta < -8) {
+        setHidden(false);
+      }
+      lastScrollY.current = y;
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [menuOpen, searchOpen]);
+
   function openSearch() {
     setMenuOpen(false);
     setSearchOpen((open) => !open);
@@ -51,7 +78,9 @@ export default function Header() {
   return (
     <header
       ref={headerRef}
-      className="sticky top-0 z-50 border-b border-[#f0dfca] bg-sand/95 backdrop-blur-md"
+      className={`fixed inset-x-0 top-0 z-50 border-b border-[#f0dfca] bg-sand/95 backdrop-blur-md transition-transform duration-300 ${
+        hidden ? '-translate-y-full' : 'translate-y-0 shadow-sm'
+      }`}
     >
       <div className="relative flex h-[78px] w-full items-center justify-between px-4 sm:px-6">
         <Link to="/" className="z-10 flex shrink-0 items-center gap-2.5" onClick={() => setMenuOpen(false)}>
@@ -67,7 +96,7 @@ export default function Header() {
         <nav
           className={`${
             menuOpen ? 'flex' : 'hidden'
-          } absolute inset-x-0 top-[78px] z-40 flex-col gap-5 bg-sand p-6 shadow-lg md:absolute md:inset-x-auto md:top-1/2 md:left-1/2 md:flex md:-translate-x-1/2 md:-translate-y-1/2 md:flex-row md:gap-6 md:bg-transparent md:p-0 md:shadow-none`}
+          } absolute inset-x-0 top-[78px] z-40 max-h-[calc(100vh-78px)] flex-col gap-5 overflow-y-auto bg-sand p-6 shadow-lg lg:absolute lg:inset-x-auto lg:top-1/2 lg:left-1/2 lg:flex lg:max-h-none lg:-translate-x-1/2 lg:-translate-y-1/2 lg:flex-row lg:gap-5 lg:overflow-visible lg:bg-transparent lg:p-0 lg:shadow-none`}
         >
           {navLinks.map((link) => (
             <NavLink
@@ -122,7 +151,7 @@ export default function Header() {
 
           <button
             type="button"
-            className="grid h-11 w-11 place-items-center border-0 bg-transparent text-maroon md:hidden"
+            className="grid h-11 w-11 place-items-center border-0 bg-transparent text-maroon lg:hidden"
             aria-label={menuOpen ? 'Close menu' : 'Open menu'}
             onClick={() => {
               setSearchOpen(false);
@@ -135,7 +164,7 @@ export default function Header() {
       </div>
 
       {searchOpen && (
-        <div className="absolute right-4 top-[78px] z-50 w-[min(100vw-2rem,420px)] rounded-2xl border border-[#ecd9c0] bg-white p-4 shadow-2xl md:right-7">
+        <div className="absolute inset-x-4 top-[78px] z-50 rounded-2xl border border-[#ecd9c0] bg-white p-4 shadow-2xl sm:inset-x-auto sm:right-4 sm:w-[min(100vw-2rem,420px)] md:right-7">
           <label className="flex items-center gap-2 rounded-full border border-[#dec9af] px-3 py-2">
             <Search size={16} className="text-[#89695f]" />
             <input

@@ -1,4 +1,9 @@
-export const API_BASE = 'http://localhost:5000';
+const LIVE_API = 'https://gupta-namkin-backend.vercel.app';
+const LOCAL_API = 'http://localhost:5000';
+
+export const API_BASE = String(
+  import.meta.env.VITE_API_URL || (import.meta.env.DEV ? LOCAL_API : LIVE_API),
+).replace(/\/$/, '');
 
 async function readJson(response) {
   const data = await response.json().catch(() => ({}));

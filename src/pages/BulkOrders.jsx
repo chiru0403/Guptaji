@@ -93,9 +93,9 @@ export default function BulkOrders() {
               Enquire on WhatsApp
             </WhatsAppButton>
           </div>
-          <div className="mx-auto flex h-[240px] w-[240px] flex-col items-center justify-center rounded-full bg-saffron shadow-[0_0_0_30px_#ffffff08,0_0_0_60px_#ffffff05] md:h-[300px] md:w-[300px]">
-            <Gift size={80} className="text-gold" />
-            <span className="mt-2 text-center font-display text-3xl font-black leading-none">
+          <div className="mx-auto flex h-52 w-52 flex-col items-center justify-center rounded-full bg-saffron shadow-[0_0_0_12px_#ffffff08,0_0_0_24px_#ffffff05] sm:h-[240px] sm:w-[240px] sm:shadow-[0_0_0_30px_#ffffff08,0_0_0_60px_#ffffff05] md:h-[300px] md:w-[300px]">
+            <Gift size={48} className="text-gold sm:h-20 sm:w-20" />
+            <span className="mt-2 text-center font-display text-xl font-black leading-none sm:text-3xl">
               FESTIVE
               <br />
               FAVOURITES

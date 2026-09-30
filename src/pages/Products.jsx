@@ -15,57 +15,64 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  async function loadProducts({ category = cat, query = q } = {}) {
-    const term = query.trim();
-    setLoading(true);
-    setError('');
-    try {
-      if (/^\d+$/.test(term)) {
-        try {
-          const product = await getProduct(term);
-          setProducts([product]);
-        } catch {
-          setProducts([]);
-        }
-        return;
-      }
-      setProducts(await getProducts({ category, q: term }));
-    } catch (err) {
-      setProducts([]);
-      setError(err.message || 'Could not load products.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
     let cancelled = false;
-
-    async function load() {
-      try {
-        const nextCategories = await getCategories();
+    getCategories()
+      .then((nextCategories) => {
         if (cancelled) return;
         const known = Array.isArray(nextCategories) && nextCategories.length ? nextCategories : ['All'];
         setCategories(known);
-        const initialCat = known.includes(paramCat) ? paramCat : 'All';
-        setCat(initialCat);
-        setProducts(await getProducts({ category: initialCat }));
-      } catch (err) {
+        setCat((current) => (known.includes(current) ? current : 'All'));
+      })
+      .catch((err) => {
         if (!cancelled) setError(err.message || 'Could not load products.');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    load();
+      });
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    setCat(paramCat);
   }, [paramCat]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const term = q.trim();
+    const timer = setTimeout(async () => {
+      if (!term) setLoading(true);
+      setError('');
+      try {
+        let next = [];
+        if (/^\d+$/.test(term)) {
+          try {
+            const product = await getProduct(term);
+            next = product?.id != null ? [product] : [];
+          } catch {
+            next = [];
+          }
+        } else {
+          next = await getProducts({ category: term ? '' : cat, q: term });
+        }
+        if (!cancelled) setProducts(Array.isArray(next) ? next : []);
+      } catch (err) {
+        if (!cancelled) {
+          setProducts([]);
+          setError(err.message || 'Could not load products.');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }, term ? 200 : 0);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [q, cat]);
 
   function chooseCategory(nextCat) {
     setCat(nextCat);
-    loadProducts({ category: nextCat, query: q });
   }
 
   return (
@@ -106,10 +113,9 @@ export default function Products() {
               ))}
             </div>
             <form
-              className="flex min-w-[210px] items-center gap-2 rounded-full border border-[#dec9af] bg-white px-3.5 py-2"
+              className="flex w-full min-w-[210px] items-center gap-2 rounded-full border border-[#dec9af] bg-white px-3.5 py-2 lg:w-[280px]"
               onSubmit={(event) => {
                 event.preventDefault();
-                loadProducts();
               }}
             >
               <button

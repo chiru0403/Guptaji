@@ -1,38 +1,52 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { getCategories, getGallery, getProducts, getSite } from '../api';
-import { galleryImages as fallbackGallery, products as fallbackProducts } from '../data/products';
+import { galleryImages as fallbackGallery } from '../data/products';
 import { adoptSite, site as fallbackSite } from '../data/site';
 
 const CatalogContext = createContext(null);
 
 export function CatalogProvider({ children }) {
-  const [products, setProducts] = useState(fallbackProducts);
+  const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [gallery, setGallery] = useState(fallbackGallery);
   const [site, setSite] = useState(fallbackSite);
+  const [siteFromApi, setSiteFromApi] = useState(false);
+  const [siteError, setSiteError] = useState('');
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
-      try {
-        const [nextCategories, nextProducts, nextGallery] = await Promise.all([
-          getCategories(),
-          getProducts(),
-          getGallery(),
-        ]);
-        if (cancelled) return;
-        if (Array.isArray(nextCategories) && nextCategories.length) setCategories(nextCategories);
-        if (Array.isArray(nextProducts) && nextProducts.length) setProducts(nextProducts);
-        if (Array.isArray(nextGallery) && nextGallery.length) setGallery(nextGallery);
-        const remoteSite = await getSite();
-        if (cancelled) return;
-        if (remoteSite && typeof remoteSite === 'object' && remoteSite.name) {
-          setSite({ ...adoptSite(remoteSite) });
-        }
-      } catch {
-        // The bundled catalogue stays in place when the API is offline.
+      const [categoryResult, productResult, galleryResult, siteResult] = await Promise.allSettled([
+        getCategories(),
+        getProducts(),
+        getGallery(),
+        getSite(),
+      ]);
+      if (cancelled) return;
+      if (categoryResult.status === 'fulfilled' && Array.isArray(categoryResult.value)) {
+        setCategories(categoryResult.value);
       }
+      if (productResult.status === 'fulfilled' && Array.isArray(productResult.value)) {
+        setProducts(productResult.value);
+      }
+      if (galleryResult.status === 'fulfilled' && Array.isArray(galleryResult.value) && galleryResult.value.length) {
+        setGallery(galleryResult.value);
+      }
+      if (siteResult.status === 'fulfilled' && siteResult.value?.name) {
+        setSite({ ...adoptSite(siteResult.value) });
+        setSiteFromApi(true);
+        setSiteError('');
+      } else {
+        setSiteFromApi(false);
+        setSiteError(
+          siteResult.status === 'rejected'
+            ? siteResult.reason?.message || 'Could not load shop details.'
+            : 'Shop details were missing from the site API.',
+        );
+      }
+      setReady(true);
     }
 
     load();
@@ -42,7 +56,7 @@ export function CatalogProvider({ children }) {
   }, []);
 
   return (
-    <CatalogContext.Provider value={{ products, categories, gallery, site }}>
+    <CatalogContext.Provider value={{ products, categories, gallery, site, siteFromApi, siteError, ready }}>
       {children}
     </CatalogContext.Provider>
   );

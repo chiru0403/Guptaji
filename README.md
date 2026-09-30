@@ -20,7 +20,7 @@ Multi-page React website for **Gupta Namkin** (Yavatmal) — product catalogue w
 
 ## Run locally
 
-Start the API first, then the website. The site sends `/api` requests to `http://localhost:5000`.
+The website calls `https://gupta-namkin-backend.vercel.app` unless `VITE_API_URL` is set. To use a backend on this machine, copy `.env.example` to `.env` and set `VITE_API_URL=http://localhost:5000`, then start that API first.
 
 ```bash
 cd backend

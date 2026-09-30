@@ -9,24 +9,46 @@ import {
   MessageCircle,
   MapPin,
   Phone,
+  Clock,
+  Mail,
 } from 'lucide-react';
 import PageMeta from '../components/PageMeta';
 import ProductCard from '../components/ProductCard';
 import WhatsAppButton from '../components/WhatsAppButton';
-import { waLink } from '../data/site';
 import { useCatalog } from '../context/CatalogContext';
 
+function shopWhatsApp(site, message = '') {
+  const text =
+    message || `Hello ${site.name}, I would like to know more about your products.`;
+  return `https://wa.me/${site.phoneWa}?text=${encodeURIComponent(text)}`;
+}
+
 export default function Home() {
-  const { products, categories, site } = useCatalog();
+  const { products, categories, site, siteFromApi, siteError, ready } = useCatalog();
   const categoryNames = categories.filter((name) => name !== 'All');
-  const popular = useMemo(() => products.filter((p) => p.popular).slice(0, 8), [products]);
+  const popular = useMemo(() => {
+    const flagged = products.filter((product) => product.popular);
+    return (flagged.length ? flagged : products).slice(0, 8);
+  }, [products]);
 
   return (
     <>
       <PageMeta
         title="Home"
-        description="Gupta Namkin — fresh namkeen and snacks in Yavatmal. Fresh Taste. Trusted Quality. Order on WhatsApp."
+        description={
+          siteFromApi
+            ? `${site.name} — ${site.tagline} ${site.address}. Call or WhatsApp ${site.phoneDisplay}.`
+            : 'Fresh namkeen and snacks. Order on WhatsApp.'
+        }
       />
+
+      <div className="h-12" aria-hidden="true" />
+      <section className="home-ticker overflow-hidden bg-maroon py-3.5 text-sm font-black tracking-[0.2em] text-[#ffd98a] whitespace-nowrap">
+        <div className="w-max animate-marquee">
+          CRUNCHY • FRESH • FLAVOURFUL • TRADITIONAL • MADE FOR SHARING • CRUNCHY • FRESH •
+          FLAVOURFUL • TRADITIONAL • MADE FOR SHARING •{' '}
+        </div>
+      </section>
 
       {/* Full-bleed hero */}
       <section className="relative min-h-[92vh] overflow-hidden">
@@ -44,11 +66,10 @@ export default function Home() {
               <Sparkles size={15} /> Yavatmal&apos;s neighbourhood snack stop
             </span>
             <h1 className="mt-4 font-display text-[clamp(3rem,8vw,5.5rem)] leading-[0.95] tracking-tight text-white">
-              Gupta{' '}
-              <span className="text-gold">Namkin</span>
+              {siteFromApi ? site.name : 'Loading shop...'}
             </h1>
             <p className="mt-3 font-display text-[clamp(1.5rem,3.5vw,2.4rem)] italic text-cream">
-              Fresh Taste. Trusted Quality.
+              {siteFromApi ? site.tagline : siteError || 'Loading shop details from the site API.'}
             </p>
             <p className="mt-5 max-w-md text-base leading-relaxed text-cream/85 md:text-lg">
               Traditional namkeen, crunchy mixtures and crowd-favourite snacks — made for everyday
@@ -61,29 +82,24 @@ export default function Home() {
               >
                 Explore Products <ArrowRight size={18} />
               </Link>
-              <WhatsAppButton
-                href={waLink()}
-                variant="cream"
-                className="px-6 py-4"
-              >
-                WhatsApp Order
-              </WhatsAppButton>
+              {siteFromApi && (
+                <WhatsAppButton
+                  href={shopWhatsApp(site)}
+                  variant="cream"
+                  className="px-6 py-4"
+                >
+                  WhatsApp Order
+                </WhatsAppButton>
+              )}
             </div>
             <div className="mt-8 flex flex-wrap gap-4 text-[13px] font-bold text-cream/90">
-              {['Fresh & flavourful', 'Clear ₹200 pricing', 'Easy WhatsApp enquiry'].map((t) => (
+              {['Fresh & flavourful','Yours faithfully', 'Easy WhatsApp enquiry'].map((t) => (
                 <span key={t} className="inline-flex items-center gap-1.5">
                   <CheckCircle2 size={17} className="text-gold" /> {t}
                 </span>
               ))}
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="overflow-hidden bg-maroon py-3.5 text-sm font-black tracking-[0.2em] text-[#ffd98a] whitespace-nowrap">
-        <div className="w-max animate-marquee">
-          CRUNCHY • FRESH • FLAVOURFUL • TRADITIONAL • MADE FOR SHARING • CRUNCHY • FRESH •
-          FLAVOURFUL • TRADITIONAL • MADE FOR SHARING •{' '}
         </div>
       </section>
 
@@ -104,17 +120,23 @@ export default function Home() {
             View full menu <ArrowRight size={16} />
           </Link>
         </div>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {popular.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
+        {!ready ? (
+          <p className="py-10 text-center text-muted">Loading products...</p>
+        ) : popular.length === 0 ? (
+          <p className="py-10 text-center text-muted">No products from the shop yet.</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {popular.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="bg-[#f7ead7] py-20 md:py-24">
         <div className="mx-auto max-w-[1180px] px-5 md:px-7">
           <span className="text-xs font-black uppercase tracking-[0.2em] text-saffron">
-            Why Gupta Namkin
+            {siteFromApi ? `Why ${site.name}` : 'Why us'}
           </span>
           <h2 className="mt-2 mb-10 font-display text-[clamp(2rem,4vw,3.5rem)] leading-tight tracking-tight text-maroon">
             Local flavours, served with <em className="italic text-saffron">care.</em>
@@ -143,23 +165,40 @@ export default function Home() {
         <h2 className="mt-2 mb-10 font-display text-[clamp(2rem,4vw,3.5rem)] leading-tight tracking-tight text-maroon">
           Browse by <em className="italic text-saffron">craving.</em>
         </h2>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-          {categoryNames.map((name) => (
-            <Link
-              key={name}
-              to={`/products?cat=${encodeURIComponent(name)}`}
-              className="rounded-2xl border border-[#ecd9c0] bg-cream p-5 transition hover:-translate-y-0.5 hover:border-saffron hover:shadow-md"
-            >
-              <b className="block font-display text-xl text-maroon">{name}</b>
-              <span className="text-xs text-[#89695f]">View products</span>
-            </Link>
-          ))}
-        </div>
+        {!ready ? (
+          <p className="py-10 text-center text-muted">Loading categories...</p>
+        ) : categoryNames.length === 0 ? (
+          <p className="py-10 text-center text-muted">No categories from the shop yet.</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            {categoryNames.map((name, index) => (
+              <Link
+                key={name}
+                to={`/products?cat=${encodeURIComponent(name)}`}
+                className="group relative overflow-hidden rounded-[1.6rem] border border-[#ecd9c0] bg-cream p-5 transition duration-300 hover:-translate-y-2 hover:border-saffron hover:shadow-xl hover:shadow-saffron/20 active:scale-[0.97]"
+              >
+                <span className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-saffron/10 transition duration-500 group-hover:scale-150 group-hover:bg-gold/30" />
+                <span className="relative text-[11px] font-black tracking-[0.22em] text-saffron">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <b className="relative mt-3 block font-display text-xl text-maroon transition duration-300 group-hover:translate-x-1 group-hover:text-saffron md:text-2xl">
+                  {name}
+                </b>
+                <span className="relative mt-2 block text-xs text-[#89695f]">
+                  {products.filter((product) => product.cat === name).length} products
+                </span>
+                <span className="relative mt-4 inline-flex items-center gap-1 text-xs font-black text-maroon opacity-70 transition duration-300 group-hover:gap-2 group-hover:text-saffron group-hover:opacity-100">
+                  Open this craving <ArrowRight size={14} />
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="mx-auto grid max-w-[1180px] items-center gap-12 px-5 pb-20 md:px-7 lg:grid-cols-2">
         <img
-          src="https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80"
+          src="https://t3.ftcdn.net/jpg/04/20/50/66/360_F_420506643_SC4gJifgr5GeWEkeMmfFSkLcVcUGYOrq.jpghttps://t4.ftcdn.net/jpg/02/08/38/95/240_F_208389537_XYn1ukJfse2kVLxJYJpiBcjEkAHrWfBt.jpg"
           alt="Traditional namkeen preparation"
           className="h-[400px] w-full rounded-[7.5rem_7.5rem_1.75rem_1.75rem] object-cover shadow-2xl shadow-maroon/15 md:h-[500px]"
         />
@@ -169,8 +208,9 @@ export default function Home() {
             Your neighbourhood namkeen stop in <em className="italic text-saffron">Yavatmal.</em>
           </h2>
           <p className="mt-4 leading-relaxed text-muted">
-            Gupta Namkin serves customers from Chapmanwadi, Guru Mandir Road with fresh taste, quality
-            ingredients and dependable service — at clear, simple prices.
+            {siteFromApi
+              ? `${site.name} — ${site.tagline} Visit the shop at ${site.address}.`
+              : siteError || 'Loading shop details...'}
           </p>
           <Link
             to="/about"
@@ -194,17 +234,22 @@ export default function Home() {
               Planning a celebration, office event or festive gift? Talk to us for bulk and assorted
               namkeen enquiries.
             </p>
-            <WhatsAppButton
-              href={waLink('Hello Gupta Namkin, I want to enquire about Bulk / Festive Order.')}
-              variant="cream"
-              className="mt-8"
-            >
-              Enquire on WhatsApp
-            </WhatsAppButton>
+            {siteFromApi && (
+              <WhatsAppButton
+                href={shopWhatsApp(
+                  site,
+                  `Hello ${site.name}, I want to enquire about Bulk / Festive Order.`,
+                )}
+                variant="cream"
+                className="mt-8"
+              >
+                Enquire on WhatsApp
+              </WhatsAppButton>
+            )}
           </div>
-          <div className="mx-auto flex h-[230px] w-[230px] flex-col items-center justify-center rounded-full bg-saffron shadow-[0_0_0_30px_#ffffff08,0_0_0_60px_#ffffff05] md:h-[280px] md:w-[280px]">
-            <Gift size={72} className="text-gold" />
-            <span className="mt-2 text-center font-display text-2xl font-black leading-none md:text-3xl">
+          <div className="mx-auto flex h-52 w-52 flex-col items-center justify-center rounded-full bg-saffron shadow-[0_0_0_12px_#ffffff08,0_0_0_24px_#ffffff05] sm:h-[230px] sm:w-[230px] sm:shadow-[0_0_0_30px_#ffffff08,0_0_0_60px_#ffffff05] md:h-[280px] md:w-[280px]">
+            <Gift size={48} className="text-gold sm:h-[72px] sm:w-[72px]" />
+            <span className="mt-2 text-center font-display text-xl font-black leading-none sm:text-2xl md:text-3xl">
               FESTIVE
               <br />
               FAVOURITES
@@ -218,29 +263,49 @@ export default function Home() {
           <div>
             <span className="text-xs font-black uppercase tracking-[0.2em] text-gold">Visit Us</span>
             <h2 className="mt-2 font-display text-[clamp(2rem,4vw,3.25rem)] leading-tight tracking-tight">
-              Find us in <em className="italic text-saffron">Chapmanwadi.</em>
+              {siteFromApi ? site.name : 'Visit the shop.'}
             </h2>
-            <div className="mt-6 space-y-4">
-              <div className="flex items-start gap-3">
-                <MapPin className="mt-1 shrink-0 text-gold" size={20} />
-                <span>{site.address}</span>
-              </div>
-              <a href={`tel:${site.phoneTel}`} className="flex items-center gap-3 transition hover:text-gold">
-                <Phone className="text-gold" size={20} />
-                {site.phoneDisplay}
-              </a>
-            </div>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <a
-                href={site.mapsSearchUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-saffron px-5 py-3 font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-saffron-dark"
-              >
-                <MapPin size={18} /> Get Directions
-              </a>
-              <WhatsAppButton variant="cream" />
-            </div>
+            {!ready ? (
+              <p className="mt-6 text-[#d7bdb5]">Loading shop details from the site API...</p>
+            ) : siteError ? (
+              <p className="mt-6 text-[#d7bdb5]">{siteError}</p>
+            ) : (
+              <>
+                <div className="mt-6 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="mt-1 shrink-0 text-gold" size={20} />
+                    <span>{site.address}</span>
+                  </div>
+                  <a href={`tel:${site.phoneTel}`} className="flex items-center gap-3 transition hover:text-gold">
+                    <Phone className="text-gold" size={20} />
+                    {site.phoneDisplay}
+                  </a>
+                  <div className="flex items-start gap-3">
+                    <Clock className="mt-1 shrink-0 text-gold" size={20} />
+                    <span>{site.openingHours}</span>
+                  </div>
+                  {site.email && (
+                    <a href={`mailto:${site.email}`} className="flex items-center gap-3 transition hover:text-gold">
+                      <Mail className="text-gold" size={20} />
+                      {site.email}
+                    </a>
+                  )}
+                </div>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  {site.mapsSearchUrl && (
+                    <a
+                      href={site.mapsSearchUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full bg-saffron px-5 py-3 font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-saffron-dark"
+                    >
+                      <MapPin size={18} /> Get Directions
+                    </a>
+                  )}
+                  <WhatsAppButton href={shopWhatsApp(site)} variant="cream" />
+                </div>
+              </>
+            )}
           </div>
           <div className="flex min-h-[220px] flex-col justify-center rounded-2xl border border-white/10 bg-white/5 p-8">
             <MapPin size={40} className="mb-4 text-gold" />
