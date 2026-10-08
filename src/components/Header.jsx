@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Search, ShoppingCart } from 'lucide-react';
+import { Menu, Mic, X, Search, ShoppingCart } from 'lucide-react';
 import { navLinks } from '../data/site';
 import { useCart } from '../context/CartContext';
 import { useCatalog } from '../context/CatalogContext';
+import { useVoiceSearch } from '../useVoiceSearch';
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -15,6 +16,10 @@ export default function Header() {
   const searchInputRef = useRef(null);
   const { count, addItem } = useCart();
   const { products } = useCatalog();
+  const { listening, voiceError, toggleVoice } = useVoiceSearch((spoken) => {
+    setSearchOpen(true);
+    setQuery(spoken);
+  });
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const onCartPage = pathname === '/cart';
@@ -171,11 +176,24 @@ export default function Header() {
               ref={searchInputRef}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search snacks..."
+              placeholder="Search snacks, or tap the mic"
               aria-label="Search snacks"
               className="w-full border-0 bg-transparent text-sm outline-none"
             />
+            <button
+              type="button"
+              onClick={toggleVoice}
+              aria-label={listening ? 'Stop voice search' : 'Search by voice'}
+              aria-pressed={listening}
+              className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${
+                listening ? 'animate-pulse bg-maroon text-white' : 'text-maroon hover:bg-[#f3e4d2]'
+              }`}
+            >
+              <Mic size={16} />
+            </button>
           </label>
+          {voiceError ? <p className="mt-2 px-1 text-xs text-maroon">{voiceError}</p> : null}
+          {listening ? <p className="mt-2 px-1 text-xs text-saffron">Listening… say sev, jalebi, or ladoo</p> : null}
 
           <div className="mt-3 max-h-80 overflow-y-auto">
             {!query.trim() && (

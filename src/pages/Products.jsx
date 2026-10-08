@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Mic, Search } from 'lucide-react';
 import PageMeta from '../components/PageMeta';
 import ProductCard from '../components/ProductCard';
 import { getCategories, getProduct, getProducts } from '../api';
+import { useVoiceSearch } from '../useVoiceSearch';
 
 export default function Products() {
   const [params] = useSearchParams();
@@ -14,6 +15,7 @@ export default function Products() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { listening, voiceError, toggleVoice } = useVoiceSearch(setQ);
 
   useEffect(() => {
     let cancelled = false;
@@ -112,27 +114,42 @@ export default function Products() {
                 </button>
               ))}
             </div>
-            <form
-              className="flex w-full min-w-[210px] items-center gap-2 rounded-full border border-[#dec9af] bg-white px-3.5 py-2 lg:w-[280px]"
-              onSubmit={(event) => {
-                event.preventDefault();
-              }}
-            >
-              <button
-                type="submit"
-                aria-label="Search products"
-                className="grid place-items-center text-[#89695f]"
+            <div className="w-full min-w-[210px] lg:w-[320px]">
+              <form
+                className="flex items-center gap-2 rounded-full border border-[#dec9af] bg-white px-3.5 py-2"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                }}
               >
-                <Search size={18} />
-              </button>
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search by name or product id"
-                className="w-full border-0 bg-transparent text-sm outline-none"
-                aria-label="Search products"
-              />
-            </form>
+                <button
+                  type="submit"
+                  aria-label="Search products"
+                  className="grid place-items-center text-[#89695f]"
+                >
+                  <Search size={18} />
+                </button>
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search by name, or tap the mic"
+                  className="w-full border-0 bg-transparent text-sm outline-none"
+                  aria-label="Search products"
+                />
+                <button
+                  type="button"
+                  onClick={toggleVoice}
+                  aria-label={listening ? 'Stop voice search' : 'Search by voice'}
+                  aria-pressed={listening}
+                  className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${
+                    listening ? 'animate-pulse bg-maroon text-white' : 'text-maroon hover:bg-[#f3e4d2]'
+                  }`}
+                >
+                  <Mic size={16} />
+                </button>
+              </form>
+              {voiceError ? <p className="mt-1 px-3 text-xs text-maroon">{voiceError}</p> : null}
+              {listening ? <p className="mt-1 px-3 text-xs text-saffron">Listening… say sev, jalebi, or ladoo</p> : null}
+            </div>
           </div>
 
           {loading ? (
