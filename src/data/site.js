@@ -59,7 +59,10 @@ export function waCartLink(
   { name = '', mobile = '', instructions = '', discountCode = '', orderNo = '' } = {}
 ) {
   const lines = items
-    .map((item, index) => `${index + 1}. ${item.name} x ${item.qty} — ₹${item.price * item.qty}`)
+    .map(
+      (item, index) =>
+        `${index + 1}. ${item.name}${item.pakeg ? ` (${item.pakeg})` : ''} x ${item.qty} — ₹${item.price * item.qty}`
+    )
     .join('\n');
   const total = items.reduce((sum, item) => sum + item.price * item.qty, 0);
   const notes = [

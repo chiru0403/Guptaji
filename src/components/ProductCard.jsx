@@ -31,8 +31,15 @@ export default function ProductCard({ product }) {
       </div>
       <div className="p-4">
         <p className="text-[9px] font-black uppercase tracking-wider text-saffron">{product.cat}</p>
-        <div className="mt-1 flex items-center justify-between gap-2">
-          <h3 className="font-display text-xl text-maroon">{product.name}</h3>
+        <div className="mt-1 flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="font-display text-xl text-maroon">{product.name}</h3>
+            {product.pakeg ? (
+              <span className="mt-1 inline-block rounded-full bg-saffron px-2.5 py-0.5 text-[11px] font-bold text-white">
+                {product.pakeg}
+              </span>
+            ) : null}
+          </div>
           <span className="text-lg font-extrabold text-saffron">₹{product.price}</span>
         </div>
         <p className="mt-2 min-h-10 text-xs leading-relaxed text-muted/90">{product.desc}</p>

@@ -198,6 +198,11 @@ export default function Header() {
                     <img src={product.img} alt="" className="h-12 w-12 rounded-lg object-cover" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-bold text-maroon">{product.name}</p>
+                      {product.pakeg ? (
+                        <span className="mt-1 inline-block rounded-full bg-saffron px-2 py-0.5 text-[10px] font-bold text-white">
+                          {product.pakeg}
+                        </span>
+                      ) : null}
                       <p className="text-xs text-saffron">₹{product.price}</p>
                     </div>
                     <button

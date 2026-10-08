@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
@@ -17,6 +17,24 @@ import ProductCard from '../components/ProductCard';
 import WhatsAppButton from '../components/WhatsAppButton';
 import { useCatalog } from '../context/CatalogContext';
 
+const heroSlides = [
+  {
+    src: 'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?auto=format&fit=crop&w=1800&q=85',
+    alt: 'Assorted Indian namkeen from Gupta Namkin',
+    motion: 'zoom',
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1800&q=85',
+    alt: 'Crispy sev and traditional namkeen',
+    motion: 'pan',
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=1800&q=85',
+    alt: 'Spiced snack mix ready to share',
+    motion: 'rise',
+  },
+];
+
 function shopWhatsApp(site, message = '') {
   const text =
     message || `Hello ${site.name}, I would like to know more about your products.`;
@@ -30,6 +48,14 @@ export default function Home() {
     const flagged = products.filter((product) => product.popular);
     return (flagged.length ? flagged : products).slice(0, 8);
   }, [products]);
+  const [heroIndex, setHeroIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setHeroIndex((current) => (current + 1) % heroSlides.length);
+    }, 5600);
+    return () => clearInterval(timer);
+  }, [heroIndex]);
 
   return (
     <>
@@ -52,11 +78,22 @@ export default function Home() {
 
       {/* Full-bleed hero */}
       <section className="relative min-h-[92vh] overflow-hidden">
-        <img
-          src="https://images.unsplash.com/photo-1599490659213-e2b9527bd087?auto=format&fit=crop&w=1800&q=85"
-          alt="Assorted Indian namkeen from Gupta Namkin"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
+        {heroSlides.map((slide, index) => (
+          <div
+            key={slide.src}
+            data-motion={slide.motion}
+            className={`hero-slide absolute inset-0 transition-opacity duration-[1400ms] ease-out ${
+              index === heroIndex ? 'is-active opacity-100' : 'opacity-0'
+            }`}
+            aria-hidden={index !== heroIndex}
+          >
+            <img
+              src={slide.src}
+              alt={index === heroIndex ? slide.alt : ''}
+              className="h-full w-full object-cover"
+            />
+          </div>
+        ))}
         <div className="absolute inset-0 bg-gradient-to-r from-night/90 via-maroon/75 to-saffron/40" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(245,189,72,0.25),transparent_45%)]" />
 
@@ -101,6 +138,24 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        <div className="absolute inset-x-0 bottom-8 z-10 flex items-center justify-center gap-3">
+          {heroSlides.map((slide, index) => (
+            <button
+              key={slide.src}
+              type="button"
+              aria-label={`Show background ${index + 1} of ${heroSlides.length}`}
+              aria-current={index === heroIndex ? 'true' : undefined}
+              onClick={() => setHeroIndex(index)}
+              className={`h-2.5 rounded-full transition-all duration-500 ${
+                index === heroIndex ? 'w-10 bg-gold' : 'w-2.5 bg-white/55 hover:bg-white'
+              }`}
+            />
+          ))}
+        </div>
+        <div key={heroIndex} className="hero-progress absolute inset-x-0 bottom-0 z-10 h-1 bg-white/15">
+          <span className="block h-full w-full bg-saffron" />
+        </div>
       </section>
 
       <section className="mx-auto max-w-[1180px] px-5 py-20 md:px-7 md:py-24">
@@ -126,8 +181,8 @@ export default function Home() {
           <p className="py-10 text-center text-muted">No products from the shop yet.</p>
         ) : (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {popular.map((p) => (
-              <ProductCard key={p.id} product={p} />
+            {popular.map((product) => (
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
         )}

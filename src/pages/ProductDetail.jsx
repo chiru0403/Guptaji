@@ -84,6 +84,11 @@ export default function ProductDetail() {
               <h1 className="mt-3 font-display text-4xl leading-tight text-maroon sm:text-5xl">
                 {product.name}
               </h1>
+              {product.pakeg ? (
+                <span className="mt-3 inline-block rounded-full bg-saffron px-3 py-1 text-xs font-bold text-white">
+                  {product.pakeg}
+                </span>
+              ) : null}
               <p className="mt-4 max-w-md leading-relaxed text-muted">{product.desc}</p>
 
               <div className="mt-6 inline-flex items-end gap-2 rounded-2xl bg-cream px-4 py-3">

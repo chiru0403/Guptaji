@@ -79,3 +79,67 @@ html.header-hidden .home-ticker {
     transform: translateY(-10px);
   }
 }
+
+@keyframes hero-zoom {
+  from {
+    transform: scale(1.18);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes hero-pan {
+  from {
+    transform: scale(1.16) translate3d(6%, 0, 0);
+  }
+  to {
+    transform: scale(1.04) translate3d(-3%, 0, 0);
+  }
+}
+
+@keyframes hero-rise {
+  from {
+    transform: scale(1.2) translate3d(0, 6%, 0);
+  }
+  to {
+    transform: scale(1.05) translate3d(0, -2%, 0);
+  }
+}
+
+@keyframes hero-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.hero-slide img {
+  transform: scale(1.12);
+}
+
+.hero-slide.is-active[data-motion='zoom'] img {
+  animation: hero-zoom 6.2s ease-out both;
+}
+
+.hero-slide.is-active[data-motion='pan'] img {
+  animation: hero-pan 6.2s ease-out both;
+}
+
+.hero-slide.is-active[data-motion='rise'] img {
+  animation: hero-rise 6.2s ease-out both;
+}
+
+.hero-progress > span {
+  transform-origin: left center;
+  animation: hero-progress 5.6s linear both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide.is-active img,
+  .hero-progress > span {
+    animation: none;
+  }
+}

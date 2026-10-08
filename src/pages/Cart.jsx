@@ -4,14 +4,7 @@ import { Minus, Plus, Trash } from 'lucide-react';
 import PageMeta from '../components/PageMeta';
 import { createOrder } from '../api';
 import { useCart } from '../context/CartContext';
-import { waLink } from '../data/site';
-import {
-  buildOrderPdf,
-  downloadOrderPdf,
-  orderCaption,
-  orderPdfFile,
-  shareOrderPdf,
-} from '../orderPdf';
+import { waCartLink } from '../data/site';
 
 const packingCharge = 0;
 
@@ -26,19 +19,6 @@ export default function Cart() {
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(null);
   const grandTotal = total + packingCharge;
-
-  async function sendSavedPdf() {
-    if (!saved?.file) return;
-    setError('');
-    const shareResult = await shareOrderPdf(saved.file, saved.caption);
-    setSaved((current) => (current ? { ...current, shareResult } : current));
-    if (shareResult === 'unsupported') {
-      downloadOrderPdf(saved.file);
-      setError(
-        'This browser cannot attach a PDF inside WhatsApp. The order PDF downloaded — open WhatsApp and attach that file to the chat.',
-      );
-    }
-  }
 
   async function checkout() {
     const customerName = name.trim();
@@ -62,6 +42,7 @@ export default function Cart() {
     setError('');
     setSubmitting(true);
     const snapshot = items;
+    const waWindow = window.open('', '_blank', 'noopener,noreferrer');
     try {
       const order = await createOrder({
         name: customerName,
@@ -70,33 +51,24 @@ export default function Cart() {
         discountCode,
         items: snapshot.map((item) => ({ productId: item.id, qty: item.qty })),
       });
-      const file = orderPdfFile(
-        buildOrderPdf({
-          orderNo: order.orderNo,
-          name: customerName,
-          mobile: customerMobile,
-          items: snapshot,
-          instructions,
-          discountCode,
-        }),
-        order.orderNo,
-      );
-      const caption = orderCaption({
-        orderNo: order.orderNo,
+      const link = waCartLink(snapshot, {
         name: customerName,
         mobile: customerMobile,
+        instructions,
+        discountCode,
+        orderNo: order.orderNo,
       });
+      if (waWindow) waWindow.location.href = link;
+      else window.location.href = link;
       clearCart();
       setSaved({
         orderNo: order.orderNo,
-        link: waLink(caption),
-        caption,
+        link,
         total: order.total,
         status: order.status,
-        file,
-        shareResult: '',
       });
     } catch (err) {
+      waWindow?.close();
       setError(err.message);
     } finally {
       setSubmitting(false);
@@ -117,17 +89,18 @@ export default function Cart() {
               <h1 className="font-display text-4xl text-maroon">Order {saved.orderNo} is saved</h1>
               <p className="mx-auto mt-3 max-w-md text-sm text-[#666]">
                 Saved to the shop as {saved.status || 'new'}
-                {saved.total != null ? ` · ₹${saved.total}.00` : ''}. Press the button below and
-                choose WhatsApp. The note and the PDF file go in the same message.
+                {saved.total != null ? ` · ₹${saved.total}.00` : ''}. WhatsApp opens to 8378815442
+                with this order.
               </p>
               <div className="mt-6 flex flex-wrap justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={sendSavedPdf}
+                <a
+                  href={saved.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="rounded-full bg-saffron px-5 py-2.5 text-sm font-bold text-white hover:bg-saffron-dark"
                 >
-                  Send message and PDF
-                </button>
+                  Open WhatsApp
+                </a>
                 <Link
                   to="/products"
                   className="rounded-full border border-saffron px-5 py-2.5 text-sm font-bold text-saffron hover:bg-saffron hover:text-white"
@@ -166,7 +139,12 @@ export default function Cart() {
                     <div className="min-w-0 flex-1 sm:contents">
                     <div className="min-w-0">
                       <p className="font-semibold text-[#222]">{item.name}</p>
-                      <p className="mt-1 text-sm text-[#888] sm:hidden">₹{item.price} pack</p>
+                      {item.pakeg ? (
+                        <span className="mt-1 inline-block rounded-full bg-saffron px-2.5 py-0.5 text-[11px] font-bold text-white">
+                          {item.pakeg}
+                        </span>
+                      ) : null}
+                      <p className="mt-1 text-sm text-[#888] sm:hidden">₹{item.price}</p>
                     </div>
                     <p className="hidden text-sm text-[#444] sm:block">₹{item.price}.00</p>
                     <div className="mt-3 flex items-center justify-between gap-3 sm:mt-0 sm:contents">

@@ -1,0 +1,183 @@
+{
+  "info": {
+    "name": "Gupta Namkin API",
+    "description": "Shop API for https://gupta-namkin-backend.vercel.app. Public routes need no token. Orders and enquiries admin routes need Authorization: Bearer {{adminToken}}. Paste ADMIN_TOKEN into the collection variable adminToken. Mobile must be a 10-digit Indian number starting with 6, 7, 8, or 9.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://gupta-namkin-backend.vercel.app" },
+    { "key": "adminToken", "value": "" },
+    { "key": "productId", "value": "1" },
+    { "key": "orderId", "value": "" },
+    { "key": "enquiryId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Public",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/health"
+          }
+        },
+        {
+          "name": "Site",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/site"
+          }
+        },
+        {
+          "name": "Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/categories"
+          }
+        },
+        {
+          "name": "Gallery",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/gallery"
+          }
+        },
+        {
+          "name": "Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?category=&q=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"],
+              "query": [
+                { "key": "category", "value": "", "description": "Optional. Example: Mixtures. Omit or All for every category." },
+                { "key": "q", "value": "", "description": "Optional product name search. Example: sev" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Product by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/products/{{productId}}"
+          }
+        },
+        {
+          "name": "Create order",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Anu\",\n  \"mobile\": \"9812345789\",\n  \"instructions\": \"\",\n  \"discountCode\": \"\",\n  \"items\": [\n    { \"productId\": 8, \"qty\": 3 },\n    { \"productId\": 1, \"qty\": 2 }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/orders"
+          }
+        },
+        {
+          "name": "Create contact enquiry",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"contact\",\n  \"name\": \"Anu\",\n  \"mobile\": \"9812345789\",\n  \"email\": \"\",\n  \"subject\": \"Shop visit\",\n  \"message\": \"What time are you open today?\"\n}"
+            },
+            "url": "{{baseUrl}}/api/enquiries"
+          }
+        },
+        {
+          "name": "Create bulk enquiry",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"bulk\",\n  \"name\": \"Sharma Stores\",\n  \"mobile\": \"9876543210\",\n  \"email\": \"\",\n  \"subject\": \"Wedding order\",\n  \"orderType\": \"Wedding\",\n  \"message\": \"20 packs of sev\"\n}"
+            },
+            "url": "{{baseUrl}}/api/enquiries"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "List orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders?status=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders"],
+              "query": [
+                { "key": "status", "value": "", "description": "Optional: new, confirmed, completed, cancelled" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update order status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}"
+            },
+            "url": "{{baseUrl}}/api/orders/{{orderId}}",
+            "description": "status: new, confirmed, completed, cancelled. Set orderId from a created order."
+          }
+        },
+        {
+          "name": "List enquiries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+            },
+            "url": "{{baseUrl}}/api/enquiries"
+          }
+        },
+        {
+          "name": "Update enquiry status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"contacted\"\n}"
+            },
+            "url": "{{baseUrl}}/api/enquiries/{{enquiryId}}",
+            "description": "status: new, contacted, closed. Set enquiryId from a created enquiry."
+          }
+        }
+      ]
+    }
+  ]
+}
